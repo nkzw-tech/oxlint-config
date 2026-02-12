@@ -1,0 +1,41 @@
+{
+  "name": "@nkzw/oxlint-config",
+  "version": "1.0.0",
+  "description": "Oxlint config with sensible defaults.",
+  "keywords": [
+    "autofix",
+    "config",
+    "defaults",
+    "oxlint",
+    "strict"
+  ],
+  "license": "MIT",
+  "author": "Christoph Nakazawa <christoph.pojer@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/nkzw-tech/oxlint-config.git"
+  },
+  "files": [
+    "index.js"
+  ],
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "format": "oxfmt --write .",
+    "lint": "oxlint ."
+  },
+  "dependencies": {
+    "@nkzw/eslint-plugin": "^2.0.0",
+    "eslint-plugin-no-only-tests": "^3.3.0",
+    "eslint-plugin-perfectionist": "^5.5.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-unused-imports": "~4.4.1"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.31.0",
+    "oxlint": "^1.46.0"
+  },
+  "peerDependencies": {
+    "oxlint": ">=1.46.0"
+  }
+}

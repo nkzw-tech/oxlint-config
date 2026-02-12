@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [],
+  "singleQuote": true,
+  "experimentalSortImports": {
+    "newlinesBetween": false
+  },
+  "experimentalSortPackageJson": {
+    "sortScripts": true
+  },
+  "experimentalTailwindcss": {
+    "stylesheet": "client/src/App.css"
+  }
+}
