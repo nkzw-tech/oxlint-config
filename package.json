@@ -1,6 +1,6 @@
 {
   "name": "@nkzw/oxlint-config",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Oxlint config with sensible defaults.",
   "keywords": [
     "autofix",
@@ -16,7 +16,8 @@
     "url": "git://github.com/nkzw-tech/oxlint-config.git"
   },
   "files": [
-    "index.js"
+    "index.js",
+    "index.d.ts"
   ],
   "type": "module",
   "main": "index.js",
