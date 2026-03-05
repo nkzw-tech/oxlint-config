@@ -28,13 +28,13 @@
   "dependencies": {
     "@nkzw/eslint-plugin": "^2.0.0",
     "eslint-plugin-no-only-tests": "^3.3.0",
-    "eslint-plugin-perfectionist": "^5.5.0",
+    "eslint-plugin-perfectionist": "^5.6.0",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-unused-imports": "~4.4.1"
   },
   "devDependencies": {
-    "oxfmt": "^0.31.0",
-    "oxlint": "^1.46.0"
+    "oxfmt": "^0.36.0",
+    "oxlint": "^1.51.0"
   },
   "peerDependencies": {
     "oxlint": ">=1.46.0"
