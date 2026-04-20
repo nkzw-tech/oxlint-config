@@ -1,6 +1,6 @@
 {
   "name": "@nkzw/oxlint-config",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Oxlint config with sensible defaults.",
   "keywords": [
     "autofix",
@@ -28,8 +28,8 @@
   "dependencies": {
     "@nkzw/eslint-plugin": "^2.0.0",
     "eslint-plugin-no-only-tests": "^3.3.0",
-    "eslint-plugin-perfectionist": "^5.8.0",
-    "eslint-plugin-react-hooks": "^7.1.0",
+    "eslint-plugin-perfectionist": "^5.9.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-unused-imports": "~4.4.1"
   },
   "devDependencies": {

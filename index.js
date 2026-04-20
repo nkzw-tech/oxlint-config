@@ -174,6 +174,7 @@ export default defineConfig({
       },
     ],
     'prefer-const': 'error',
+    'react-hooks-js/component-hook-factories': 'error',
     'react-hooks-js/config': 'error',
     'react-hooks-js/error-boundaries': 'error',
     'react-hooks-js/gating': 'error',
