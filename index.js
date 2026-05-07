@@ -14,7 +14,6 @@ export default defineConfig({
     '@nkzw/eslint-plugin',
     'eslint-plugin-no-only-tests',
     'eslint-plugin-perfectionist',
-    'eslint-plugin-unused-imports',
     { name: 'react-hooks-js', specifier: 'eslint-plugin-react-hooks' },
   ],
   overrides: [
@@ -144,6 +143,15 @@ export default defineConfig({
     'no-unused-expressions': 'error',
     'no-unused-labels': 'error',
     'no-unused-private-class-members': 'error',
+    'no-unused-vars': [
+      'error',
+      {
+        fix: {
+          imports: 'safe-fix',
+          variables: 'off',
+        },
+      },
+    ],
     'no-useless-backreference': 'error',
     'no-useless-catch': 'error',
     'no-useless-escape': 'error',
@@ -236,7 +244,6 @@ export default defineConfig({
     'unicorn/prefer-structured-clone': 'error',
     'unicorn/prefer-top-level-await': 'error',
     'unicorn/text-encoding-identifier-case': 'error',
-    'unused-imports/no-unused-imports': 'error',
     'use-isnan': 'error',
     'valid-typeof': 'error',
   },
