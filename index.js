@@ -146,10 +146,12 @@ export default defineConfig({
     'no-unused-vars': [
       'error',
       {
+        args: 'none',
         fix: {
           imports: 'safe-fix',
           variables: 'off',
         },
+        varsIgnorePattern: '^_',
       },
     ],
     'no-useless-backreference': 'error',
