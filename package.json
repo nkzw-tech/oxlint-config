@@ -28,14 +28,15 @@
   "dependencies": {
     "@nkzw/eslint-plugin": "^2.0.0",
     "eslint-plugin-no-only-tests": "^3.4.0",
-    "eslint-plugin-perfectionist": "^5.9.0",
+    "eslint-plugin-perfectionist": "^5.9.1",
     "eslint-plugin-react-hooks": "^7.1.1"
   },
   "devDependencies": {
-    "oxfmt": "^0.48.0",
-    "oxlint": "^1.63.0"
+    "oxfmt": "^0.55.0",
+    "oxlint": "^1.70.0"
   },
   "peerDependencies": {
     "oxlint": ">=1.46.0"
-  }
+  },
+  "packageManager": "pnpm@11.7.0"
 }
