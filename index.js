@@ -11,9 +11,18 @@ export default defineConfig({
     node: true,
   },
   jsPlugins: [
-    '@nkzw/eslint-plugin',
-    'eslint-plugin-no-only-tests',
-    'eslint-plugin-perfectionist',
+    {
+      name: '@nkzw',
+      specifier: import.meta.resolve('@nkzw/eslint-plugin'),
+    },
+    {
+      name: 'no-only-tests',
+      specifier: import.meta.resolve('eslint-plugin-no-only-tests'),
+    },
+    {
+      name: 'perfectionist',
+      specifier: import.meta.resolve('eslint-plugin-perfectionist'),
+    },
   ],
   overrides: [
     {
