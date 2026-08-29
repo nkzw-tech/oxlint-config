@@ -7,11 +7,8 @@ _Opinionated Oxlint config with sensible defaults._
 With Oxlint v1.46+:
 
 ```
-npm install -D @nkzw/oxlint-config @nkzw/eslint-plugin eslint-plugin-no-only-tests eslint-plugin-perfectionist eslint-plugin-react-hooks eslint-plugin-unused-imports
+npm install -D @nkzw/oxlint-config @nkzw/eslint-plugin
 ```
-
-> [!NOTE]
-> Due to a limitation in Oxlint's configuration resolver, you have to directly install the JS plugins for now.
 
 In your `oxlint.config.ts`:
 
