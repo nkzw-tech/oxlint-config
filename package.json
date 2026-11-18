@@ -40,7 +40,7 @@
     "vitest": "5.1.0"
   },
   "peerDependencies": {
-    "oxlint": ">=1.79.0"
+    "oxlint": ">=1.90.0"
   },
   "packageManager": "pnpm@12.21.0"
 }

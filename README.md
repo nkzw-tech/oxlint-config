@@ -4,7 +4,7 @@ _Opinionated Oxlint config with sensible defaults._
 
 ## Installation & Usage
 
-With Oxlint v1.46+:
+With Oxlint v1.90+:
 
 ```
 npm install -D @nkzw/oxlint-config @nkzw/eslint-plugin
@@ -22,6 +22,8 @@ export default defineConfig({
 ```
 
 Then run `pnpm oxlint` or `npm oxlint`.
+
+To run the preset’s type-aware rules with Oxlint 1.94+, install `tsrs` as a dev dependency and run `pnpm oxlint --type-aware`, or set `options: { typeAware: true }` in your Oxlint config. The preset checks for floating promises in TypeScript files.
 
 ## Philosophy & Principles
 
