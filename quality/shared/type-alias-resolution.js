@@ -1,4 +1,4 @@
-import { lexicalTypeParameterNames } from './lexical-type-parameters.js';
+import { bindsTypeParameter } from './lexical-type-parameters.js';
 
 const environmentsByProgram = new WeakMap();
 
@@ -41,21 +41,8 @@ function recordBinding(node, environment) {
     environment.bindingsByName.set(name, scopes);
   }
   const scope = enclosingTypeScope(node);
-  // Multiple declarations in one scope make an alias ambiguous.
-  scopes.set(scope, !scopes.has(scope) && node.type === 'TSTypeAliasDeclaration' ? node : null);
-
-  if (node.type === 'TSInterfaceDeclaration') {
-    const parent = node.parent;
-    if (
-      parent.type === 'Program' ||
-      ((parent.type === 'ExportNamedDeclaration' || parent.type === 'ExportDefaultDeclaration') &&
-        parent.parent.type === 'Program')
-    ) {
-      const declarations = environment.interfaces.get(name) ?? [];
-      declarations.push(node);
-      environment.interfaces.set(name, declarations);
-    }
-  }
+  // Merged or ambiguous declarations cannot be classified from a single node.
+  scopes.set(scope, scopes.has(scope) ? null : node);
 }
 
 /**
@@ -84,7 +71,6 @@ export function withTypeBindings(context, createVisitors) {
     if (collect) {
       environment = {
         bindingsByName: new Map(),
-        interfaces: new Map(),
         visitorKeys: context.sourceCode.visitorKeys,
       };
       environmentsByProgram.set(program, environment);
@@ -101,32 +87,28 @@ export function withTypeBindings(context, createVisitors) {
   return visitors;
 }
 
-export function visibleTypeAlias(name, use, environment) {
+// undefined means unbound; null means a type parameter or multiple declarations.
+export function visibleTypeBinding(name, use, environment) {
   const scopes = environment.bindingsByName.get(name);
-  if (!scopes || lexicalTypeParameterNames(use, environment.visitorKeys).has(name)) {
-    return null;
-  }
+  let child = null;
   for (let node = use; node; node = node.parent) {
-    if (scopes.has(node)) {
+    if (scopes?.has(node)) {
       return scopes.get(node);
     }
+    if (bindsTypeParameter(node, child, name, environment.visitorKeys)) {
+      return null;
+    }
+    child = node;
   }
-  return null;
+  return undefined;
 }
 
-export function hasVisibleTypeBinding(name, use, environment) {
-  if (lexicalTypeParameterNames(use, environment.visitorKeys).has(name)) {
-    return true;
+export function visibleTypeAlias(name, use, environment) {
+  if (!environment.bindingsByName.has(name)) {
+    return null;
   }
-  const scopes = environment.bindingsByName.get(name);
-  if (scopes) {
-    for (let node = use; node; node = node.parent) {
-      if (scopes.has(node)) {
-        return true;
-      }
-    }
-  }
-  return false;
+  const declaration = visibleTypeBinding(name, use, environment);
+  return declaration?.type === 'TSTypeAliasDeclaration' ? declaration : null;
 }
 
 function typeReferenceName(type) {

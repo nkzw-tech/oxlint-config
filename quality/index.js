@@ -1,4 +1,4 @@
-// Adapted from dmmulroy/anti-slop at 13909c9e07590f5a85d93c62712259fe14a883f7.
+// Adapted from https://github.com/dmmulroy/anti-slop/tree/13909c9e07590f5a85d93c62712259fe14a883f7.
 import { noArrayFilterMapRule } from './rules/no-array-filter-map.js';
 import { noChainedTypeAssertionsRule } from './rules/no-chained-type-assertions.js';
 import { noConditionalEmptyObjectSpreadRule } from './rules/no-conditional-empty-object-spread.js';
@@ -13,7 +13,7 @@ import { noUnsafeDictionaryTypeRule } from './rules/no-unsafe-dictionary-type.js
 import { noWidenThenAssertRule } from './rules/no-widen-then-assert.js';
 
 export default {
-  meta: { name: 'anti-slop' },
+  meta: { name: 'quality' },
   rules: {
     'no-array-filter-map': noArrayFilterMapRule,
     'no-chained-type-assertions': noChainedTypeAssertionsRule,

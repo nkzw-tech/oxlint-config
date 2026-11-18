@@ -12,7 +12,7 @@ if (!project || !baseline) {
 }
 const cwd = resolve(project);
 const oxlint = fileURLToPath(new URL('../bin/oxlint', import.meta.resolve('oxlint')));
-const current = fileURLToPath(new URL('../anti-slop/index.js', import.meta.url));
+const current = fileURLToPath(new URL('../quality/index.js', import.meta.url));
 const tracked = execFileSync('git', ['ls-files', '-z'], {
   cwd,
   encoding: 'utf8',
@@ -27,14 +27,14 @@ const { ignorePatterns } = JSON.parse(
 const tempDir = mkdtempSync(join(tmpdir(), 'oxlint-project-bench-'));
 
 function configFor(mode, label, specifier) {
-  const plugin = { name: 'anti-slop', specifier };
+  const plugin = { name: 'quality', specifier };
   const config =
     mode === 'rules'
       ? {
           categories: { correctness: 'off' },
           jsPlugins: [plugin],
           rules: Object.fromEntries(
-            Object.entries(preset.rules).filter(([name]) => name.startsWith('anti-slop/')),
+            Object.entries(preset.rules).filter(([name]) => name.startsWith('quality/')),
           ),
         }
       : {

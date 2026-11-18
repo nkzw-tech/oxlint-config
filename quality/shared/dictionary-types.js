@@ -1,4 +1,4 @@
-import { hasVisibleTypeBinding, visibleTypeAlias } from './type-alias-resolution.js';
+import { visibleTypeAlias, visibleTypeBinding } from './type-alias-resolution.js';
 
 const BUILT_INS = new Set([
   'Record',
@@ -17,7 +17,7 @@ function typeReferenceName(type) {
 }
 
 function isBuiltIn(name, use, environment) {
-  return BUILT_INS.has(name) && !hasVisibleTypeBinding(name, use, environment);
+  return BUILT_INS.has(name) && visibleTypeBinding(name, use, environment) === undefined;
 }
 
 function isUnappliedReferenceTo(type, name) {
@@ -60,13 +60,8 @@ function isEffectivelyEmptyTypeLiteral(type) {
   return type.members.length === 0 || type.members.every(isEffectivelyEmptyMember);
 }
 
-function isEffectivelyEmptyInterface(declarations) {
-  if (declarations.length !== 1) {
-    return false;
-  }
-  const [type] = declarations;
+function isEffectivelyEmptyInterface(type) {
   return (
-    type !== undefined &&
     type.extends.length === 0 &&
     (type.body.body.length === 0 || type.body.body.every(isEffectivelyEmptyMember))
   );
@@ -155,21 +150,25 @@ function unsafeDirectValue(type, environment, substitutions, resolvingAliases) {
       ? null
       : unsafeDirectValue(substitution, environment, substitutions, resolvingAliases);
   }
-  const interfaceDeclarations = environment.interfaces.get(name);
-  if (interfaceDeclarations !== undefined) {
-    return isEffectivelyEmptyInterface(interfaceDeclarations) ? 'empty-object' : null;
+  const declaration = visibleTypeBinding(name, unwrapped, environment);
+  if (declaration?.type === 'TSInterfaceDeclaration') {
+    return isEffectivelyEmptyInterface(declaration) ? 'empty-object' : null;
   }
-  const alias = visibleTypeAlias(name, unwrapped, environment);
-  if (alias === null || resolvingAliases.has(name)) {
+  if (declaration?.type !== 'TSTypeAliasDeclaration' || resolvingAliases.has(name)) {
     return null;
   }
-  const nextSubstitutions = aliasSubstitution(alias, unwrapped, substitutions);
+  const nextSubstitutions = aliasSubstitution(declaration, unwrapped, substitutions);
   if (nextSubstitutions === null) {
     return null;
   }
   const nextResolving = new Set(resolvingAliases);
   nextResolving.add(name);
-  return unsafeDirectValue(alias.typeAnnotation, environment, nextSubstitutions, nextResolving);
+  return unsafeDirectValue(
+    declaration.typeAnnotation,
+    environment,
+    nextSubstitutions,
+    nextResolving,
+  );
 }
 
 function dictionaryValueTypes(type, environment, substitutions, resolvingAliases) {

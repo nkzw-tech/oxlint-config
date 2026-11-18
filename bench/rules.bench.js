@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, expect, test } from 'vitest';
-import plugin from '../anti-slop/index.js';
+import plugin from '../quality/index.js';
 
 const examples = {
   'no-array-filter-map': 'const rows = [1, 2]; rows.filter(Boolean).map(String); rows.map(String);',
@@ -24,7 +24,7 @@ const examples = {
 
 const rules = Object.keys(plugin.rules);
 const workspace = mkdtempSync(join(tmpdir(), 'oxlint-rules-bench-'));
-const current = fileURLToPath(new URL('../anti-slop/index.js', import.meta.url));
+const current = fileURLToPath(new URL('../quality/index.js', import.meta.url));
 const oxlint = fileURLToPath(new URL('../bin/oxlint', import.meta.resolve('oxlint')));
 const repetitions = 256;
 const samples = { iterations: 7, time: 0, warmupIterations: 2, warmupTime: 0 };
@@ -72,8 +72,8 @@ function benchmark(name, source, enabled, expected, size = repetitions) {
         config,
         JSON.stringify({
           categories: { correctness: 'off' },
-          jsPlugins: [{ name: 'anti-slop', specifier }],
-          rules: Object.fromEntries(enabled.map((rule) => ['anti-slop/' + rule, 'error'])),
+          jsPlugins: [{ name: 'quality', specifier }],
+          rules: Object.fromEntries(enabled.map((rule) => ['quality/' + rule, 'error'])),
         }),
       );
       const diagnostics = run(config, file, true);

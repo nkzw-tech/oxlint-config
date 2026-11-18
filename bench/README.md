@@ -1,17 +1,17 @@
-# Anti-slop rule benchmarks
+# Quality rule benchmarks
 
-Measured on an Apple M5 Max with Node 26.13.1, Oxlint 1.94.0, and Vitest 5.1.0. The baseline is the plugin from commit `9bfa545`. Both versions used the same Oxlint binary, rules, severities, and inputs.
+Measured on an Apple M5 Max with Node 26.13.1, Oxlint 1.94.0, and Vitest 5.1.0. The baseline is the plugin from commit `9bfa545` (Git tree `60ce9277ca1a`). Both versions used the same Oxlint binary, rules, severities, and inputs.
 
 ## Repository runs
 
 Median CLI wall time over 10 measured runs per version, with eight threads, a warm filesystem cache, a fresh process per run, and alternating version order. Inputs were tracked JavaScript and TypeScript files with each project's ignore patterns. The full-preset rows include the other plugins in this shared config. Every measured run matched the baseline's diagnostics, including messages and source locations.
 
-| Project       | Files | Configuration      | Diagnostics |     Before |      After | Time saved |
-| ------------- | ----: | ------------------ | ----------: | ---------: | ---------: | ---------: |
-| Athena Crisis | 2,160 | 12 anti-slop rules |         355 |   661.8 ms |   449.4 ms |      32.1% |
-| Athena Crisis | 2,160 | Full preset        |         627 | 1,427.9 ms | 1,068.7 ms |      25.2% |
-| Pocket Folio  |   166 | 12 anti-slop rules |          24 |   187.5 ms |   162.1 ms |      13.5% |
-| Pocket Folio  |   166 | Full preset        |          24 |   456.4 ms |   440.7 ms |       3.4% |
+| Project       | Files | Configuration    | Diagnostics |     Before |      After | Time saved |
+| ------------- | ----: | ---------------- | ----------: | ---------: | ---------: | ---------: |
+| Athena Crisis | 2,160 | 12 quality rules |         355 |   661.8 ms |   449.4 ms |      32.1% |
+| Athena Crisis | 2,160 | Full preset      |         627 | 1,427.9 ms | 1,068.7 ms |      25.2% |
+| Pocket Folio  |   166 | 12 quality rules |          24 |   187.5 ms |   162.1 ms |      13.5% |
+| Pocket Folio  |   166 | Full preset      |          24 |   456.4 ms |   440.7 ms |       3.4% |
 
 Oxlint's `--debug=timings` also measures time inside the rule callbacks. A separate single-thread run, using the median of five measured runs per version, went from **322.5 to 108.2 ms** in Athena Crisis and **37.2 to 14.0 ms** in Pocket Folio. CLI startup, parsing, and dispatch contribute to wall time outside those callbacks.
 
@@ -43,7 +43,7 @@ Run `pnpm bench` for the focused suite. To compare revisions, extract the baseli
 
 ```sh
 baseline_dir=$(mktemp -d)
-git archive 9bfa545 anti-slop | tar -x -C "$baseline_dir"
-BENCH_BASELINE_PLUGIN="$baseline_dir/anti-slop/index.js" pnpm bench
-pnpm bench:project /path/to/project "$baseline_dir/anti-slop/index.js"
+git archive 60ce9277ca1a | tar -x -C "$baseline_dir"
+BENCH_BASELINE_PLUGIN="$baseline_dir/index.js" pnpm bench
+pnpm bench:project /path/to/project "$baseline_dir/index.js"
 ```

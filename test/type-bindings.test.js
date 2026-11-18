@@ -15,6 +15,25 @@ test('resolves forward declarations, local predicates and shadows independently 
     ];
     const files = {
       'broad.ts': [...sameUses, 'type Input = object;', 'type Result = unknown;'],
+      'interfaces.ts': [
+        'export type Outer = Record<string, Value>;',
+        'interface Value {}',
+        'export function count<Value extends string>(items: Record<string, Value>) {}',
+        'function local() {',
+        '  type Inner = Record<string, Value>;',
+        '  interface Value { id: number }',
+        '}',
+        'function nested<Value extends string>() {',
+        '  { interface Value {}; type Inner = Record<string, Value>; }',
+        '}',
+        'interface Merged {}',
+        'interface Merged { id: number }',
+        'export type Combined = Record<string, Merged>;',
+        "export type Mapped = { [Value in 'key']: Record<string, Value> };",
+        'export type Inferred<T> = T extends Promise<infer Value>',
+        '  ? Record<string, Value>',
+        '  : Record<string, Value>;',
+      ],
       'narrow.ts': [...sameUses, 'type Input = string;', 'type Result = number;'],
       'predicate.ts': [
         'const value = { name: "ok" };',
@@ -33,8 +52,8 @@ test('resolves forward declarations, local predicates and shadows independently 
       categories: { correctness: 'off' },
       jsPlugins: [
         {
-          name: 'anti-slop',
-          specifier: fileURLToPath(new URL('../anti-slop/index.js', import.meta.url)),
+          name: 'quality',
+          specifier: fileURLToPath(new URL('../quality/index.js', import.meta.url)),
         },
       ],
       rules: Object.fromEntries(
@@ -45,7 +64,7 @@ test('resolves forward declarations, local predicates and shadows independently 
           'unknown-type-aliases',
           'unsafe-dictionary-type',
           'widen-then-assert',
-        ].map((name) => ['anti-slop/no-' + name, 'error']),
+        ].map((name) => ['quality/no-' + name, 'error']),
       ),
     };
     writeFileSync(join(dir, 'config.json'), JSON.stringify(config));
@@ -57,18 +76,21 @@ test('resolves forward declarations, local predicates and shadows independently 
     );
     expect(result.status, result.stderr).toBe(1);
     const { diagnostics, number_of_files } = JSON.parse(result.stdout);
-    expect(number_of_files).toBe(3);
+    expect(number_of_files).toBe(4);
     expect(
       diagnostics.map((row) => [row.filename, row.labels[0].span.line, row.code].join(' ')).sort(),
     ).toEqual([
-      'broad.ts 1 anti-slop(no-object-parameters)',
-      'broad.ts 1 anti-slop(no-unknown-returns)',
-      'broad.ts 2 anti-slop(no-unsafe-dictionary-type)',
-      'broad.ts 5 anti-slop(no-unknown-type-aliases)',
-      'predicate.ts 2 anti-slop(no-known-value-widening)',
-      'predicate.ts 4 anti-slop(no-object-parameters)',
-      'predicate.ts 5 anti-slop(no-known-value-widening)',
-      'predicate.ts 6 anti-slop(no-widen-then-assert)',
+      'broad.ts 1 quality(no-object-parameters)',
+      'broad.ts 1 quality(no-unknown-returns)',
+      'broad.ts 2 quality(no-unsafe-dictionary-type)',
+      'broad.ts 5 quality(no-unknown-type-aliases)',
+      'interfaces.ts 1 quality(no-unsafe-dictionary-type)',
+      'interfaces.ts 17 quality(no-unsafe-dictionary-type)',
+      'interfaces.ts 9 quality(no-unsafe-dictionary-type)',
+      'predicate.ts 2 quality(no-known-value-widening)',
+      'predicate.ts 4 quality(no-object-parameters)',
+      'predicate.ts 5 quality(no-known-value-widening)',
+      'predicate.ts 6 quality(no-widen-then-assert)',
     ]);
   } finally {
     rmSync(dir, { force: true, recursive: true });
