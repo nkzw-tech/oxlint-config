@@ -24,6 +24,10 @@ export default defineConfig({
       specifier: import.meta.resolve('eslint-plugin-no-only-tests'),
     },
   ],
+  options: {
+    reportUnusedDisableDirectives: 'error',
+    typeAware: true,
+  },
   overrides: [
     {
       files: ['**/*.ts', '**/*.tsx', '**/*.mts', '**/*.cts'],

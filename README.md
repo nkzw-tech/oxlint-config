@@ -4,10 +4,10 @@ _Opinionated Oxlint config with sensible defaults._
 
 ## Installation & Usage
 
-With Oxlint v1.90+:
+Install the preset with Oxlint 1.94+ and its type-aware backend, `tsrs`:
 
 ```
-npm install -D @nkzw/oxlint-config @nkzw/eslint-plugin
+npm install -D @nkzw/oxlint-config oxlint tsrs
 ```
 
 In your `oxlint.config.ts`:
@@ -23,7 +23,14 @@ export default defineConfig({
 
 To include sorting, change the import to `@nkzw/oxlint-config/with-sorting`. Then run `pnpm oxlint` or `npx oxlint`.
 
-To run the preset’s type-aware rules with Oxlint 1.94+, install `tsrs` as a dev dependency and run `pnpm oxlint --type-aware`, or set `options: { typeAware: true }` in your Oxlint config. The preset checks for floating promises in TypeScript files.
+In 3.0, both presets run type-aware rules and report unused lint suppressions as errors by default. If you already use Oxlint 1.94+ and only need the backend, run `npm install -D tsrs` or `pnpm add -D tsrs`.
+
+## Migrating to v3
+
+1. Upgrade `@nkzw/oxlint-config` to v3, install Oxlint 1.94+ and `tsrs`, and switch your import to `@nkzw/oxlint-config/with-sorting` to keep v2’s sorting rules.
+2. Run `pnpm oxlint`. In your project config, temporarily set each new rule that reports errors to `"off"`. Rerun lint and commit the passing upgrade.
+3. Remove one `"off"` override and run lint. If the rule fits your project, fix every finding, rerun lint, and commit the change for that rule.
+4. Repeat for each remaining override. Confirm with the project maintainers which rules, if any, should stay disabled.
 
 ## Philosophy & Principles
 
