@@ -171,20 +171,6 @@ function functionBoundary(node) {
   return null;
 }
 
-function resolvedVariableForIdentifier(scopes, identifier) {
-  for (const scope of scopes) {
-    const reference = scope.references.find(
-      (candidate) =>
-        candidate.identifier.start === identifier.start &&
-        candidate.identifier.end === identifier.end,
-    );
-    if (reference !== undefined) {
-      return reference.resolved;
-    }
-  }
-  return null;
-}
-
 function variableDeclarator(variable) {
   for (const definition of variable.defs) {
     if (definition.type === 'Variable' && definition.node.type === 'VariableDeclarator') {
@@ -194,7 +180,7 @@ function variableDeclarator(variable) {
   return null;
 }
 
-function knownValueEvidence(expression, scopes, boundary, visitedVariables) {
+function knownValueEvidence(expression, resolve, boundary, visitedVariables) {
   const unwrapped = unwrapExpressionParentheses(expression);
 
   if (unwrapped.type === 'TSAsExpression' || unwrapped.type === 'TSTypeAssertion') {
@@ -222,7 +208,7 @@ function knownValueEvidence(expression, scopes, boundary, visitedVariables) {
   if (unwrapped.type !== 'Identifier') {
     return null;
   }
-  const variable = resolvedVariableForIdentifier(scopes, unwrapped);
+  const variable = resolve(unwrapped);
   if (variable === null || visitedVariables.has(variable)) {
     return null;
   }
@@ -250,15 +236,11 @@ function knownValueEvidence(expression, scopes, boundary, visitedVariables) {
     return null;
   }
 
-  return knownValueEvidence(
-    declarator.init,
-    scopes,
-    boundary,
-    new Set([...visitedVariables, variable]),
-  );
+  visitedVariables.add(variable);
+  return knownValueEvidence(declarator.init, resolve, boundary, visitedVariables);
 }
 
-function widenedBinding(variable, scopes) {
+function widenedBinding(variable, resolve) {
   const declarator = variableDeclarator(variable);
   if (
     declarator === null ||
@@ -286,7 +268,7 @@ function widenedBinding(variable, scopes) {
     initializerAssertion !== null && initializerBroadKind !== null
       ? assertedExpression(initializerAssertion)
       : declarator.init;
-  const evidence = knownValueEvidence(originalExpression, scopes, boundary, new Set([variable]));
+  const evidence = knownValueEvidence(originalExpression, resolve, boundary, new Set([variable]));
   return evidence === null ? null : { boundary, broadKind, declaredAt: declarator.end, evidence };
 }
 
@@ -309,19 +291,31 @@ function assertionIsNarrower(sourceText, broadKind, evidence, assertedType) {
 /** Detect immutable local bindings that erase a known type and are later asserted back to a narrower type. */
 export const noWidenThenAssertRule = {
   createOnce(context) {
-    let scopes = [];
+    // References can belong to a different binding than a same-named declaration
+    // (for example in parameter defaults). Use the scope manager's resolution.
+    const candidates = [];
+    const broadBindings = new Set();
+    let references;
+    const resolve = (identifier) => {
+      if (!references) {
+        references = new Map();
+        for (const scope of context.sourceCode.scopeManager.scopes) {
+          for (const reference of scope.references) {
+            references.set(reference.identifier, reference.resolved);
+          }
+        }
+      }
+      return references.get(identifier) ?? null;
+    };
 
     const checkAssertion = (node) => {
       const expression = assertedExpression(node);
-      if (expression.type !== 'Identifier') {
-        return;
-      }
 
-      const variable = resolvedVariableForIdentifier(scopes, expression);
+      const variable = resolve(expression);
       if (variable === null) {
         return;
       }
-      const widened = widenedBinding(variable, scopes);
+      const widened = widenedBinding(variable, resolve);
       if (
         widened === null ||
         node.start <= widened.declaredAt ||
@@ -343,12 +337,38 @@ export const noWidenThenAssertRule = {
       });
     };
 
+    const collectAssertion = (node) => {
+      if (assertedExpression(node).type === 'Identifier') {
+        candidates.push(node);
+      }
+    };
     return {
       Program() {
-        scopes = context.sourceCode.scopeManager.scopes;
+        references = null;
+        candidates.length = 0;
+        broadBindings.clear();
       },
-      TSAsExpression: checkAssertion,
-      TSTypeAssertion: checkAssertion,
+      'Program:exit'() {
+        for (const node of candidates) {
+          if (broadBindings.has(assertedExpression(node).name)) {
+            checkAssertion(node);
+          }
+        }
+        candidates.length = 0;
+        references = null;
+      },
+      TSAsExpression: collectAssertion,
+      TSTypeAssertion: collectAssertion,
+      VariableDeclarator(node) {
+        if (node.id.type !== 'Identifier' || !node.init || node.parent.kind !== 'const') {
+          return;
+        }
+        const annotated = node.id.typeAnnotation?.typeAnnotation;
+        const asserted = assertionFromExpression(node.init)?.typeAnnotation;
+        if ((annotated && broadTypeKind(annotated)) || (asserted && broadTypeKind(asserted))) {
+          broadBindings.add(node.id.name);
+        }
+      },
     };
   },
   meta: {

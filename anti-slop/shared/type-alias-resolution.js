@@ -2,12 +2,6 @@ import { lexicalTypeParameterNames } from './lexical-type-parameters.js';
 
 const environmentsByProgram = new WeakMap();
 
-function isNode(value) {
-  return (
-    typeof value === 'object' && value !== null && 'type' in value && typeof value.type === 'string'
-  );
-}
-
 function enclosingTypeScope(node) {
   let current = node.parent;
   while (current !== null) {
@@ -25,113 +19,114 @@ function enclosingTypeScope(node) {
   return node;
 }
 
-function declaredTypeBinding(node) {
-  if (node.type === 'TSTypeAliasDeclaration') {
-    return { alias: node, name: node.id.name };
+const bindingTypes = [
+  'ClassDeclaration',
+  'ClassExpression',
+  'ImportDefaultSpecifier',
+  'ImportNamespaceSpecifier',
+  'ImportSpecifier',
+  'TSEnumDeclaration',
+  'TSInterfaceDeclaration',
+  'TSTypeAliasDeclaration',
+];
+
+function recordBinding(node, environment) {
+  const name = (node.local ?? node.id)?.name;
+  if (name === undefined) {
+    return;
   }
-  if (
-    node.type === 'TSInterfaceDeclaration' ||
-    node.type === 'TSEnumDeclaration' ||
-    node.type === 'ClassDeclaration' ||
-    node.type === 'ClassExpression'
-  ) {
-    return node.id === null ? null : { alias: null, name: node.id.name };
+  let scopes = environment.bindingsByName.get(name);
+  if (!scopes) {
+    scopes = new Map();
+    environment.bindingsByName.set(name, scopes);
   }
-  if (
-    node.type === 'ImportSpecifier' ||
-    node.type === 'ImportDefaultSpecifier' ||
-    node.type === 'ImportNamespaceSpecifier'
-  ) {
-    return { alias: null, name: node.local.name };
+  const scope = enclosingTypeScope(node);
+  // Multiple declarations in one scope make an alias ambiguous.
+  scopes.set(scope, !scopes.has(scope) && node.type === 'TSTypeAliasDeclaration' ? node : null);
+
+  if (node.type === 'TSInterfaceDeclaration') {
+    const parent = node.parent;
+    if (
+      parent.type === 'Program' ||
+      ((parent.type === 'ExportNamedDeclaration' || parent.type === 'ExportDefaultDeclaration') &&
+        parent.parent.type === 'Program')
+    ) {
+      const declarations = environment.interfaces.get(name) ?? [];
+      declarations.push(node);
+      environment.interfaces.set(name, declarations);
+    }
+  }
+}
+
+/**
+ * Let Oxlint's traversal index declarations once for all enabled type rules.
+ * Defer only candidate checks until the complete index includes forward declarations.
+ */
+export function withTypeBindings(context, createVisitors) {
+  const checks = [];
+  const visitors = createVisitors((check, node) => checks.push(check, node));
+  let environment;
+  let collect;
+  for (const kind of bindingTypes) {
+    const visit = visitors[kind];
+    visitors[kind] = (node) => {
+      if (collect) {
+        recordBinding(node, environment);
+      }
+      visit?.(node);
+    };
+  }
+  const start = visitors.Program;
+  visitors.Program = (program) => {
+    checks.length = 0;
+    environment = environmentsByProgram.get(program);
+    collect = !environment;
+    if (collect) {
+      environment = {
+        bindingsByName: new Map(),
+        interfaces: new Map(),
+        visitorKeys: context.sourceCode.visitorKeys,
+      };
+      environmentsByProgram.set(program, environment);
+    }
+    start?.();
+  };
+  visitors['Program:exit'] = () => {
+    for (let i = 0; i < checks.length; i += 2) {
+      checks[i](checks[i + 1], environment);
+    }
+    checks.length = 0;
+    environment = null;
+  };
+  return visitors;
+}
+
+export function visibleTypeAlias(name, use, environment) {
+  const scopes = environment.bindingsByName.get(name);
+  if (!scopes || lexicalTypeParameterNames(use, environment.visitorKeys).has(name)) {
+    return null;
+  }
+  for (let node = use; node; node = node.parent) {
+    if (scopes.has(node)) {
+      return scopes.get(node);
+    }
   }
   return null;
 }
 
-function collectTypeBindings(node, visitorKeys, bindingsByName) {
-  const declared = declaredTypeBinding(node);
-  if (declared !== null) {
-    const bindings = bindingsByName.get(declared.name) ?? [];
-    bindings.push({ ...declared, scope: enclosingTypeScope(node) });
-    bindingsByName.set(declared.name, bindings);
+export function hasVisibleTypeBinding(name, use, environment) {
+  if (lexicalTypeParameterNames(use, environment.visitorKeys).has(name)) {
+    return true;
   }
-
-  for (const key of visitorKeys[node.type] ?? []) {
-    const value = node[key];
-    if (isNode(value)) {
-      collectTypeBindings(value, visitorKeys, bindingsByName);
-      continue;
-    }
-    if (!Array.isArray(value)) {
-      continue;
-    }
-    for (const child of value) {
-      if (isNode(child)) {
-        collectTypeBindings(child, visitorKeys, bindingsByName);
+  const scopes = environment.bindingsByName.get(name);
+  if (scopes) {
+    for (let node = use; node; node = node.parent) {
+      if (scopes.has(node)) {
+        return true;
       }
     }
   }
-}
-
-/** Collect every lexical type alias and competing type binding in a program. */
-export function createTypeAliasEnvironment(program, visitorKeys) {
-  const cached = environmentsByProgram.get(program);
-  if (cached) {
-    return cached;
-  }
-  const bindingsByName = new Map();
-  collectTypeBindings(program, visitorKeys, bindingsByName);
-  const environment = { bindingsByName, visitorKeys };
-  environmentsByProgram.set(program, environment);
-  return environment;
-}
-
-function ancestorDistance(ancestor, node) {
-  let current = node;
-  let distance = 0;
-  while (current !== null) {
-    if (current === ancestor) {
-      return distance;
-    }
-    current = current.parent;
-    distance += 1;
-  }
-  return null;
-}
-
-function nearestTypeBindings(name, use, environment) {
-  const candidates = environment.bindingsByName.get(name) ?? [];
-  let nearestDistance = Number.POSITIVE_INFINITY;
-  let nearest = [];
-  for (const candidate of candidates) {
-    const distance = ancestorDistance(candidate.scope, use);
-    if (distance === null || distance > nearestDistance) {
-      continue;
-    }
-    if (distance === nearestDistance) {
-      nearest.push(candidate);
-      continue;
-    }
-    nearestDistance = distance;
-    nearest = [candidate];
-  }
-  return nearest;
-}
-
-/** Resolve the nearest visible alias with this name, respecting lexical shadowing. */
-export function visibleTypeAlias(name, use, environment) {
-  if (lexicalTypeParameterNames(use, environment.visitorKeys).has(name)) {
-    return null;
-  }
-  const bindings = nearestTypeBindings(name, use, environment);
-  return bindings.length === 1 ? (bindings[0]?.alias ?? null) : null;
-}
-
-/** Return whether a local declaration shadows a built-in type at this use. */
-export function hasVisibleTypeBinding(name, use, environment) {
-  return (
-    lexicalTypeParameterNames(use, environment.visitorKeys).has(name) ||
-    nearestTypeBindings(name, use, environment).length > 0
-  );
+  return false;
 }
 
 function typeReferenceName(type) {

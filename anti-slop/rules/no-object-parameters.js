@@ -2,60 +2,54 @@ import {
   functionParameterBindingName,
   functionParameterTypeAnnotation,
 } from '../shared/function-parameters.js';
-import {
-  createTypeAliasEnvironment,
-  resolvedTypeMatches,
-} from '../shared/type-alias-resolution.js';
+import { withTypeBindings, resolvedTypeMatches } from '../shared/type-alias-resolution.js';
+
+const resolvesToObject = (type, environment) =>
+  resolvedTypeMatches(type, environment, (resolved, matches) => {
+    if (resolved.type === 'TSObjectKeyword') {
+      return true;
+    }
+    if (resolved.type === 'TSParenthesizedType') {
+      return matches(resolved.typeAnnotation);
+    }
+    return resolved.type === 'TSUnionType' && resolved.types.some(matches);
+  });
 
 /** Ban the broad object type on function inputs, including local aliases to object. */
 export const noObjectParametersRule = {
   createOnce(context) {
-    let environment = null;
-
-    const resolvesToObject = (type) =>
-      environment !== null &&
-      resolvedTypeMatches(type, environment, (resolved, matches) => {
-        if (resolved.type === 'TSObjectKeyword') {
-          return true;
-        }
-        if (resolved.type === 'TSParenthesizedType') {
-          return matches(resolved.typeAnnotation);
-        }
-        return resolved.type === 'TSUnionType' && resolved.types.some(matches);
-      });
-
-    const checkParameters = (node) => {
-      for (const parameter of node.params) {
-        const annotation = functionParameterTypeAnnotation(parameter);
-        if (annotation === null || annotation === undefined) {
-          continue;
-        }
-        if (!resolvesToObject(annotation.typeAnnotation)) {
-          continue;
-        }
+    const checkParameter = (parameter, environment) => {
+      const type = functionParameterTypeAnnotation(parameter).typeAnnotation;
+      if (resolvesToObject(type, environment)) {
         context.report({
           data: { parameter: functionParameterBindingName(parameter, context.sourceCode) },
           messageId: 'objectParameter',
-          node: annotation.typeAnnotation,
+          node: type,
         });
       }
     };
 
-    return {
-      ArrowFunctionExpression: checkParameters,
-      FunctionDeclaration: checkParameters,
-      FunctionExpression: checkParameters,
-      Program(node) {
-        environment = createTypeAliasEnvironment(node, context.sourceCode.visitorKeys);
-      },
-      TSCallSignatureDeclaration: checkParameters,
-      TSConstructorType: checkParameters,
-      TSConstructSignatureDeclaration: checkParameters,
-      TSDeclareFunction: checkParameters,
-      TSEmptyBodyFunctionExpression: checkParameters,
-      TSFunctionType: checkParameters,
-      TSMethodSignature: checkParameters,
-    };
+    return withTypeBindings(context, (defer) => {
+      const checkParameters = (node) => {
+        for (const parameter of node.params) {
+          if (functionParameterTypeAnnotation(parameter)) {
+            defer(checkParameter, parameter);
+          }
+        }
+      };
+      return {
+        ArrowFunctionExpression: checkParameters,
+        FunctionDeclaration: checkParameters,
+        FunctionExpression: checkParameters,
+        TSCallSignatureDeclaration: checkParameters,
+        TSConstructorType: checkParameters,
+        TSConstructSignatureDeclaration: checkParameters,
+        TSDeclareFunction: checkParameters,
+        TSEmptyBodyFunctionExpression: checkParameters,
+        TSFunctionType: checkParameters,
+        TSMethodSignature: checkParameters,
+      };
+    });
   },
   meta: {
     docs: {

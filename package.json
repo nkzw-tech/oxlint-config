@@ -23,8 +23,11 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "bench": "vitest bench --run --reporter=verbose",
+    "bench:project": "node bench/project.mjs",
     "format": "oxfmt --write .",
-    "lint": "oxlint ."
+    "lint": "oxlint .",
+    "test": "vitest run test"
   },
   "dependencies": {
     "@nkzw/eslint-plugin": "^2.0.0",
@@ -33,7 +36,8 @@
   },
   "devDependencies": {
     "oxfmt": "^0.79.0",
-    "oxlint": "^1.94.0"
+    "oxlint": "^1.94.0",
+    "vitest": "5.1.0"
   },
   "peerDependencies": {
     "oxlint": ">=1.79.0"

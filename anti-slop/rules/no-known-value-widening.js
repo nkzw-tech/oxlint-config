@@ -1,7 +1,6 @@
 import {
   classifyUnsafeDictionaryValue,
   classifyWideningTarget,
-  createTypeEnvironment,
   isKnownEvidenceExpression,
 } from '../shared/dictionary-types.js';
 import {
@@ -10,6 +9,7 @@ import {
   functionParameterTypeAnnotation,
 } from '../shared/function-parameters.js';
 import { resolveVariable } from '../shared/scope.js';
+import { withTypeBindings } from '../shared/type-alias-resolution.js';
 
 function unwrapExpression(expression) {
   let current = expression;
@@ -264,8 +264,8 @@ function hasParentAssertion(node) {
 /** Detect sound syntactic cases where a known value is explicitly widened and loses evidence. */
 export const noKnownValueWideningRule = {
   createOnce(context) {
-    let environment = null;
-
+    const annotatedBindings = new Set();
+    const predicateNames = new Set();
     const reportFlow = (expression, destination, subject) => {
       if (destination === null) {
         return;
@@ -283,144 +283,170 @@ export const noKnownValueWideningRule = {
       });
     };
 
-    const targetFromAnnotation = (annotation) =>
-      environment === null ? null : annotationTarget(annotation, environment);
+    const checkAssignment = (node, environment) => {
+      if (!annotatedBindings.has(node.left.name)) {
+        return;
+      }
+      const variable = resolveVariable(context.sourceCode, node.left);
+      if (variable === null) {
+        return;
+      }
+      const declarator = variableDeclarator(variable);
+      if (declarator === null || declarator.id.type !== 'Identifier') {
+        return;
+      }
+      reportFlow(
+        node.right,
+        annotationTarget(declarator.id.typeAnnotation, environment),
+        `binding \`${declarator.id.name}\``,
+      );
+    };
 
-    return {
-      AccessorProperty(node) {
-        if (node.value === null) {
-          return;
-        }
+    const checkPredicateCall = (node, environment) => {
+      const callee = unwrapExpression(node.callee);
+      if (callee.type === 'Identifier' && !predicateNames.has(callee.name)) {
+        return;
+      }
+      const owner = localFunctionForCall(context.sourceCode, node.callee);
+      if (owner === null) {
+        return;
+      }
+      const parameterIndex = typePredicateSubjectIndex(context.sourceCode, owner);
+      if (parameterIndex === null) {
+        return;
+      }
+      const parameter = owner.params[parameterIndex];
+      const argument = node.arguments[parameterIndex];
+      if (parameter === undefined || argument === undefined || argument.type === 'SpreadElement') {
+        return;
+      }
+      const parameterAnnotation = functionParameterTypeAnnotation(parameter);
+      if (
+        parameterAnnotation === null ||
+        parameterAnnotation === undefined ||
+        !containsUnknownType(parameterAnnotation.typeAnnotation)
+      ) {
+        return;
+      }
+      if (!hasKnownCallArgumentEvidence(context.sourceCode, argument, environment)) {
+        return;
+      }
+      context.report({
+        data: {
+          subject: `argument for parameter \`${functionParameterBindingName(parameter, context.sourceCode)}\` of \`${functionName(context.sourceCode, owner)}\``,
+          target: 'unknown',
+        },
+        messageId: 'widening',
+        node: argument,
+      });
+    };
+
+    const checkProperty = (node, environment) => {
+      reportFlow(
+        node.value,
+        annotationTarget(node.typeAnnotation, environment),
+        `property \`${sourceKeyName(context.sourceCode, node.key)}\``,
+      );
+    };
+    const checkReturn = (node, environment) => {
+      const owner = node.type === 'ArrowFunctionExpression' ? node : enclosingFunction(node);
+      if (owner?.returnType) {
         reportFlow(
-          node.value,
-          targetFromAnnotation(node.typeAnnotation),
-          `property \`${sourceKeyName(context.sourceCode, node.key)}\``,
-        );
-      },
-      ArrowFunctionExpression(node) {
-        if (node.body.type === 'BlockStatement') {
-          return;
-        }
-        reportFlow(
-          node.body,
-          targetFromAnnotation(node.returnType),
-          `return value of \`${functionName(context.sourceCode, node)}\``,
-        );
-      },
-      AssignmentExpression(node) {
-        if (node.operator !== '=' || node.left.type !== 'Identifier') {
-          return;
-        }
-        const variable = resolveVariable(context.sourceCode, node.left);
-        if (variable === null) {
-          return;
-        }
-        const declarator = variableDeclarator(variable);
-        if (declarator === null || declarator.id.type !== 'Identifier') {
-          return;
-        }
-        reportFlow(
-          node.right,
-          targetFromAnnotation(declarator.id.typeAnnotation),
-          `binding \`${declarator.id.name}\``,
-        );
-      },
-      CallExpression(node) {
-        if (environment === null) {
-          return;
-        }
-        const owner = localFunctionForCall(context.sourceCode, node.callee);
-        if (owner === null) {
-          return;
-        }
-        const parameterIndex = typePredicateSubjectIndex(context.sourceCode, owner);
-        if (parameterIndex === null) {
-          return;
-        }
-        const parameter = owner.params[parameterIndex];
-        const argument = node.arguments[parameterIndex];
-        if (
-          parameter === undefined ||
-          argument === undefined ||
-          argument.type === 'SpreadElement'
-        ) {
-          return;
-        }
-        const parameterAnnotation = functionParameterTypeAnnotation(parameter);
-        if (
-          parameterAnnotation === null ||
-          parameterAnnotation === undefined ||
-          !containsUnknownType(parameterAnnotation.typeAnnotation)
-        ) {
-          return;
-        }
-        if (!hasKnownCallArgumentEvidence(context.sourceCode, argument, environment)) {
-          return;
-        }
-        context.report({
-          data: {
-            subject: `argument for parameter \`${functionParameterBindingName(parameter, context.sourceCode)}\` of \`${functionName(context.sourceCode, owner)}\``,
-            target: 'unknown',
-          },
-          messageId: 'widening',
-          node: argument,
-        });
-      },
-      Program(node) {
-        environment = createTypeEnvironment(node, context.sourceCode.visitorKeys);
-      },
-      PropertyDefinition(node) {
-        if (node.value === null) {
-          return;
-        }
-        reportFlow(
-          node.value,
-          targetFromAnnotation(node.typeAnnotation),
-          `property \`${sourceKeyName(context.sourceCode, node.key)}\``,
-        );
-      },
-      ReturnStatement(node) {
-        if (node.argument === null) {
-          return;
-        }
-        const owner = enclosingFunction(node);
-        reportFlow(
-          node.argument,
-          targetFromAnnotation(owner?.returnType),
+          node.type === 'ArrowFunctionExpression' ? node.body : node.argument,
+          annotationTarget(owner.returnType, environment),
           `return value of \`${functionName(context.sourceCode, owner)}\``,
         );
-      },
-      TSAsExpression(node) {
-        if (environment === null || hasParentAssertion(node)) {
-          return;
-        }
-        reportFlow(
-          node.expression,
-          classifyWideningTarget(node.typeAnnotation, environment),
-          'assertion',
-        );
-      },
-      TSTypeAssertion(node) {
-        if (environment === null || hasParentAssertion(node)) {
-          return;
-        }
-        reportFlow(
-          node.expression,
-          classifyWideningTarget(node.typeAnnotation, environment),
-          'assertion',
-        );
-      },
-      VariableDeclarator(node) {
-        if (node.init === null || node.id.type !== 'Identifier') {
-          return;
-        }
-        reportFlow(
-          node.init,
-          targetFromAnnotation(node.id.typeAnnotation),
-          `binding \`${node.id.name}\``,
-        );
-      },
+      }
     };
+    const checkAssertion = (node, environment) => {
+      reportFlow(
+        node.expression,
+        classifyWideningTarget(node.typeAnnotation, environment),
+        'assertion',
+      );
+    };
+    const checkVariable = (node, environment) => {
+      reportFlow(
+        node.init,
+        annotationTarget(node.id.typeAnnotation, environment),
+        `binding \`${node.id.name}\``,
+      );
+    };
+
+    return withTypeBindings(context, (defer) => {
+      const property = (node) => {
+        if (node.typeAnnotation && node.value) {
+          defer(checkProperty, node);
+        }
+      };
+      const assertion = (node) => {
+        if (!hasParentAssertion(node)) {
+          defer(checkAssertion, node);
+        }
+      };
+      return {
+        AccessorProperty: property,
+        ArrowFunctionExpression(node) {
+          if (node.returnType && node.body.type !== 'BlockStatement') {
+            defer(checkReturn, node);
+          }
+        },
+        AssignmentExpression(node) {
+          if (node.operator === '=' && node.left.type === 'Identifier') {
+            defer(checkAssignment, node);
+          }
+        },
+        CallExpression(node) {
+          const callee = unwrapExpression(node.callee);
+          if (callee.type === 'Identifier' || isFunctionExpression(callee)) {
+            defer(checkPredicateCall, node);
+          }
+        },
+        Program() {
+          predicateNames.clear();
+          annotatedBindings.clear();
+        },
+        PropertyDefinition: property,
+        ReturnStatement(node) {
+          if (node.argument) {
+            defer(checkReturn, node);
+          }
+        },
+        TSAsExpression: assertion,
+        TSTypeAssertion: assertion,
+        TSTypePredicate(node) {
+          const owner = node.parent.parent;
+          if (!isFunctionExpression(owner) || owner.returnType?.typeAnnotation !== node) {
+            return;
+          }
+          if (owner.id) {
+            predicateNames.add(owner.id.name);
+          }
+          let initializer = owner;
+          while (initializer.parent.expression === initializer) {
+            initializer = initializer.parent;
+          }
+          const declaration = initializer.parent;
+          if (declaration.type === 'VariableDeclarator' && declaration.init === initializer) {
+            if (declaration.id.type === 'Identifier') {
+              predicateNames.add(declaration.id.name);
+            } else {
+              for (const variable of context.sourceCode.getDeclaredVariables(declaration)) {
+                predicateNames.add(variable.name);
+              }
+            }
+          }
+        },
+        VariableDeclarator(node) {
+          if (node.id.type === 'Identifier' && node.id.typeAnnotation) {
+            annotatedBindings.add(node.id.name);
+            if (node.init) {
+              defer(checkVariable, node);
+            }
+          }
+        },
+      };
+    });
   },
   meta: {
     docs: {

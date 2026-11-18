@@ -5,6 +5,8 @@ import {
   unwrapArrayExpression,
 } from '../shared/array-method.js';
 
+const arrayCopies = new Set(['concat', 'slice', 'toSpliced', 'toSorted', 'toReversed', 'with']);
+
 function enclosingReducer(node) {
   let parent = node.parent;
   while (parent !== null) {
@@ -86,7 +88,10 @@ export const noReduceAccumulatorCopyRule = {
     return {
       CallExpression(node) {
         const method = arrayMethodTarget(node.callee);
-        if (method === null) {
+        if (
+          !method ||
+          (method.name !== 'assign' && method.name !== 'from' && !arrayCopies.has(method.name))
+        ) {
           return;
         }
         const reducer = enclosingReducer(node);
@@ -121,9 +126,7 @@ export const noReduceAccumulatorCopyRule = {
         ) {
           const source = node.arguments[0];
           copiesAccumulator = source !== undefined && isAccumulator(source);
-        } else if (
-          ['concat', 'slice', 'toSpliced', 'toSorted', 'toReversed', 'with'].includes(method.name)
-        ) {
+        } else if (arrayCopies.has(method.name)) {
           const initialValue = reducer.initialValue;
           const arrayAccumulator =
             initialValue !== undefined && isKnownArrayExpression(context.sourceCode, initialValue);

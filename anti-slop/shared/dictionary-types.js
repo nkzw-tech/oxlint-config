@@ -1,8 +1,4 @@
-import {
-  createTypeAliasEnvironment,
-  hasVisibleTypeBinding,
-  visibleTypeAlias,
-} from './type-alias-resolution.js';
+import { hasVisibleTypeBinding, visibleTypeAlias } from './type-alias-resolution.js';
 
 const BUILT_INS = new Set([
   'Record',
@@ -16,38 +12,12 @@ const BUILT_INS = new Set([
 ]);
 const TRANSPARENT_WRAPPERS = new Set(['Readonly', 'Partial', 'Required', 'NonNullable']);
 
-function declaredStatement(statement) {
-  return statement.type === 'ExportNamedDeclaration' ||
-    statement.type === 'ExportDefaultDeclaration'
-    ? (statement.declaration ?? null)
-    : statement;
-}
-
-export function createTypeEnvironment(program, visitorKeys) {
-  const interfaces = new Map();
-
-  for (const statement of program.body) {
-    const declaration = declaredStatement(statement);
-    if (declaration?.type !== 'TSInterfaceDeclaration') {
-      continue;
-    }
-    const declarations = interfaces.get(declaration.id.name) ?? [];
-    declarations.push(declaration);
-    interfaces.set(declaration.id.name, declarations);
-  }
-
-  return {
-    interfaces,
-    typeAliases: createTypeAliasEnvironment(program, visitorKeys),
-  };
-}
-
 function typeReferenceName(type) {
   return type.typeName.type === 'Identifier' ? type.typeName.name : null;
 }
 
 function isBuiltIn(name, use, environment) {
-  return BUILT_INS.has(name) && !hasVisibleTypeBinding(name, use, environment.typeAliases);
+  return BUILT_INS.has(name) && !hasVisibleTypeBinding(name, use, environment);
 }
 
 function isUnappliedReferenceTo(type, name) {
@@ -189,7 +159,7 @@ function unsafeDirectValue(type, environment, substitutions, resolvingAliases) {
   if (interfaceDeclarations !== undefined) {
     return isEffectivelyEmptyInterface(interfaceDeclarations) ? 'empty-object' : null;
   }
-  const alias = visibleTypeAlias(name, unwrapped, environment.typeAliases);
+  const alias = visibleTypeAlias(name, unwrapped, environment);
   if (alias === null || resolvingAliases.has(name)) {
     return null;
   }
@@ -253,7 +223,7 @@ function dictionaryValueTypes(type, environment, substitutions, resolvingAliases
       : dictionaryValueTypes(source, environment, substitutions, resolvingAliases);
   }
 
-  const alias = visibleTypeAlias(name, unwrapped, environment.typeAliases);
+  const alias = visibleTypeAlias(name, unwrapped, environment);
   if (alias === null || resolvingAliases.has(name)) {
     return [];
   }
@@ -320,7 +290,7 @@ export function classifyWideningTarget(type, environment) {
       ? { kind: 'open dictionary' }
       : null;
   }
-  const alias = visibleTypeAlias(name, unwrapped, environment.typeAliases);
+  const alias = visibleTypeAlias(name, unwrapped, environment);
   if (alias === null) {
     return null;
   }
@@ -383,7 +353,7 @@ function isBroadMappedKey(type, environment, substitutions, visitedAliases = new
   if (name === 'PropertyKey' && isBuiltIn(name, unwrapped, environment)) {
     return true;
   }
-  const alias = visibleTypeAlias(name, unwrapped, environment.typeAliases);
+  const alias = visibleTypeAlias(name, unwrapped, environment);
   if (
     alias === null ||
     (alias.typeParameters?.params.length ?? 0) > 0 ||
@@ -438,7 +408,7 @@ function classifyAliasBroadTarget(type, environment, substitutions, resolvingAli
       ? { kind: 'open dictionary' }
       : null;
   }
-  const alias = visibleTypeAlias(name, unwrapped, environment.typeAliases);
+  const alias = visibleTypeAlias(name, unwrapped, environment);
   if (alias === null || resolvingAliases.has(name)) {
     return null;
   }

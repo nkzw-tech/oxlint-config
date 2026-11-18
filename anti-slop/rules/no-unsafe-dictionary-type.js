@@ -1,9 +1,8 @@
 import {
   classifyUnsafeDictionary,
   classifyUnsafeDictionaryValue,
-  createTypeEnvironment,
 } from '../shared/dictionary-types.js';
-import { visibleTypeAlias } from '../shared/type-alias-resolution.js';
+import { visibleTypeAlias, withTypeBindings } from '../shared/type-alias-resolution.js';
 
 const typeNodeKinds = new Set([
   'JSDocNonNullableType',
@@ -71,7 +70,7 @@ function isPlainAliasConsumerUse(node, environment) {
   const name = typeReferenceName(node);
   return (
     name !== null &&
-    visibleTypeAlias(name, node, environment.typeAliases) !== null &&
+    visibleTypeAlias(name, node, environment) !== null &&
     !isInsideTypeAliasDeclaration(node)
   );
 }
@@ -89,68 +88,56 @@ function isInsideTypeParameterConstraint(node) {
   return false;
 }
 
-function shouldReportType(node, environment) {
+function isSuppressed(node, environment) {
   if (isInsideTypeParameterConstraint(node)) {
-    return false;
+    return true;
   }
   if (isPlainAliasConsumerUse(node, environment)) {
-    return false;
-  }
-  if (classifyUnsafeDictionary(node, environment) === null) {
-    return false;
+    return true;
   }
   let current = node.parent;
   while (current !== null && current.type !== 'Program') {
     if (isTypeNode(current) && classifyUnsafeDictionary(current, environment) !== null) {
-      return false;
+      return true;
     }
     current = current.parent;
   }
-  return true;
+  return false;
 }
 
 /** Disallow object-dictionary contracts whose direct value type is an unsafe escape hatch. */
 export const noUnsafeDictionaryTypeRule = {
   createOnce(context) {
-    let environment = null;
     const report = (node, value) => {
       context.report({ data: { value }, messageId: 'unsafeDictionary', node });
     };
-    const reportIfUnsafe = (node) => {
-      if (environment === null || !shouldReportType(node, environment)) {
-        return;
-      }
+    const reportIfUnsafe = (node, environment) => {
       const unsafe = classifyUnsafeDictionary(node, environment);
-      if (unsafe === null) {
+      if (unsafe === null || isSuppressed(node, environment)) {
         return;
       }
       report(node, unsafe.unsafeValue);
     };
 
-    return {
-      Program(node) {
-        environment = createTypeEnvironment(node, context.sourceCode.visitorKeys);
-      },
-      TSIndexSignature(node) {
-        if (
-          environment === null ||
-          node.typeAnnotation === null ||
-          node.parent.type === 'TSTypeLiteral'
-        ) {
-          return;
-        }
-        const unsafe = classifyUnsafeDictionaryValue(
-          node.typeAnnotation.typeAnnotation,
-          environment,
-        );
-        if (unsafe !== null) {
-          report(node, unsafe.unsafeValue);
-        }
-      },
-      TSMappedType: reportIfUnsafe,
-      TSTypeLiteral: reportIfUnsafe,
-      TSTypeReference: reportIfUnsafe,
+    const checkIndex = (node, environment) => {
+      const unsafe = classifyUnsafeDictionaryValue(node.typeAnnotation.typeAnnotation, environment);
+      if (unsafe !== null) {
+        report(node, unsafe.unsafeValue);
+      }
     };
+    return withTypeBindings(context, (defer) => {
+      const checkType = (node) => defer(reportIfUnsafe, node);
+      return {
+        TSIndexSignature(node) {
+          if (node.typeAnnotation && node.parent.type !== 'TSTypeLiteral') {
+            defer(checkIndex, node);
+          }
+        },
+        TSMappedType: checkType,
+        TSTypeLiteral: checkType,
+        TSTypeReference: checkType,
+      };
+    });
   },
   meta: {
     docs: {
