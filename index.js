@@ -23,10 +23,6 @@ export default defineConfig({
       name: 'no-only-tests',
       specifier: import.meta.resolve('eslint-plugin-no-only-tests'),
     },
-    {
-      name: 'perfectionist',
-      specifier: import.meta.resolve('eslint-plugin-perfectionist'),
-    },
   ],
   overrides: [
     {
@@ -75,12 +71,6 @@ export default defineConfig({
         'no-console': 'off',
       },
     },
-    {
-      files: ['server/**/*.tsx'],
-      rules: {
-        'react/rules-of-hooks': 'off',
-      },
-    },
   ],
   plugins: ['typescript', 'import', 'jsx-a11y', 'oxc', 'promise', 'react', 'unicorn', 'vitest'],
   rules: {
@@ -94,6 +84,7 @@ export default defineConfig({
       },
     ],
     '@typescript-eslint/await-thenable': ['error', { allowMixedPromiseArrays: true }],
+    '@typescript-eslint/ban-ts-comment': 'error',
     '@typescript-eslint/no-array-delete': 'error',
     '@typescript-eslint/no-duplicate-enum-values': 'error',
     '@typescript-eslint/no-duplicate-type-constituents': 'error',
@@ -230,23 +221,6 @@ export default defineConfig({
     'oxc/no-accumulating-spread': 'error',
     'oxc/number-arg-out-of-range': 'error',
     'oxc/uninvoked-array-callback': 'error',
-    'perfectionist/sort-enums': [
-      'error',
-      {
-        partitionByComment: true,
-        sortByValue: 'always',
-      },
-    ],
-    'perfectionist/sort-heritage-clauses': 'error',
-    'perfectionist/sort-interfaces': 'error',
-    'perfectionist/sort-jsx-props': 'error',
-    'perfectionist/sort-object-types': 'error',
-    'perfectionist/sort-objects': [
-      'error',
-      {
-        partitionByComment: true,
-      },
-    ],
     'prefer-arrow-callback': [
       'error',
       {

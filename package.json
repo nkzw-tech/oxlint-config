@@ -18,10 +18,17 @@
   "files": [
     "quality",
     "index.js",
-    "index.d.ts"
+    "index.d.ts",
+    "with-sorting.js",
+    "with-sorting.d.ts"
   ],
   "type": "module",
   "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./with-sorting": "./with-sorting.js",
+    "./*": "./*"
+  },
   "scripts": {
     "bench": "vitest bench --run --reporter=verbose",
     "bench:project": "node bench/project.mjs",

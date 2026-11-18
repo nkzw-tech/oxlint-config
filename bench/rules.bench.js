@@ -86,7 +86,11 @@ function benchmark(name, source, enabled, expected, size = repetitions) {
       reference = diagnostics;
       tasks.push(bench(label, () => run(config, file, false)));
     }
-    await bench.compare(...tasks, samples);
+    if (tasks.length === 1) {
+      await tasks[0].run(samples);
+    } else {
+      await bench.compare(...tasks, samples);
+    }
   });
 }
 

@@ -21,7 +21,7 @@ export default defineConfig({
 });
 ```
 
-Then run `pnpm oxlint` or `npm oxlint`.
+To include sorting, change the import to `@nkzw/oxlint-config/with-sorting`. Then run `pnpm oxlint` or `npx oxlint`.
 
 To run the preset’s type-aware rules with Oxlint 1.94+, install `tsrs` as a dev dependency and run `pnpm oxlint --type-aware`, or set `options: { typeAware: true }` in your Oxlint config. The preset checks for floating promises in TypeScript files.
 
@@ -30,10 +30,11 @@ To run the preset’s type-aware rules with Oxlint 1.94+, install `tsrs` as a de
 Use this configuration if these principles resonate with you:
 
 - **Error, Never Warn:** Warnings are noise and get ignored. Either it's an issue, or it isn't. This config forces developers to fix problems or explicitly disable the rule with a comment.
-- **Strict, Consistent Code Style:** When multiple approaches exist, this configuration enforces the strictest, most consistent code style, preferring modern language features and best practices.
+- **Consistent code patterns:** Both presets enforce the same rules for correctness and code quality.
 - **Prevent Bugs:** Problematic patterns such as `instanceof` are not allowed, forcing developers to choose more robust patterns. Debug-only code such as `console.log` or `test.only` are disallowed to avoid unintended logging in production or accidental CI failures.
 - **Fast:** Slow rules are avoided. For example, TypeScript's `noUnusedLocals` check is preferred over `no-unused-vars`.
 - **Don't get in the way:** [Subjective or overly opinionated rules](https://github.com/airbnb/javascript) (e.g. style preferences) are disabled. Autofixable rules are preferred to reduce friction and save time.
+- **Optional sorting:** The `/with-sorting` preset also orders enums, interfaces, JSX props, object types, and object properties with [Perfectionist](https://perfectionist.dev/).
 
 ## Included Plugins & Rules
 
@@ -45,7 +46,6 @@ This configuration consists of the most useful and least annoying rules from the
 - [`eslint-plugin-import-x`](https://github.com/un-ts/eslint-plugin-import-x)
 - [`eslint-plugin-react`](https://github.com/jsx-eslint/eslint-plugin-react)
 - [`eslint-plugin-react-hooks`](https://github.com/facebook/react/tree/main/packages/eslint-plugin-react-hooks)
-- [`eslint-plugin-perfectionist`](https://perfectionist.dev/)
 - [`eslint-plugin-no-instanceof`](https://www.npmjs.com/package/eslint-plugin-no-instanceof)
 - [`eslint-plugin-no-only-tests`](https://github.com/levibuzolic/eslint-plugin-no-only-tests)
 

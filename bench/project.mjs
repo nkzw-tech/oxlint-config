@@ -4,7 +4,7 @@ import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import preset from '../index.js';
+import preset from '../with-sorting.js';
 
 const [project, baseline] = process.argv.slice(2);
 if (!project || !baseline) {
