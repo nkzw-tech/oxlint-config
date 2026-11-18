@@ -35,6 +35,8 @@ Use this configuration if these principles resonate with you:
 
 ## Included Plugins & Rules
 
+The preset includes selected [anti-slop rules](./anti-slop/index.js) for TypeScript assertions and annotations, `Reflect.get` and `Reflect.apply`, array filtering and mapping, reducer copies, and conditional empty-object spreads. These rules run with plain `oxlint`, alongside the built-in `oxc/no-accumulating-spread` rule.
+
 This configuration consists of the most useful and least annoying rules from the following ESlint/Oxlint plugins:
 
 - [`eslint-plugin-unicorn`](https://github.com/sindresorhus/eslint-plugin-unicorn)
