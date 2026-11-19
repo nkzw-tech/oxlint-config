@@ -44,12 +44,12 @@
   "devDependencies": {
     "oxfmt": "^0.79.0",
     "oxlint": "^1.94.0",
-    "tsrs": "0.25.0-ts7.1.0-beta",
+    "tsrs": "7.1.0-beta.tsrs3",
     "vitest": "5.1.0"
   },
   "peerDependencies": {
     "oxlint": ">=1.94.0",
-    "tsrs": ">=0.25.0-ts7.1.0-beta"
+    "tsrs": ">=0.25.0-ts7.1.0-beta || ^7.1.0-beta.tsrs2"
   },
   "packageManager": "pnpm@12.21.0"
 }
