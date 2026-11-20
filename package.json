@@ -38,18 +38,24 @@
   },
   "dependencies": {
     "@nkzw/eslint-plugin": "^2.0.0",
-    "eslint-plugin-no-only-tests": "^3.4.0",
-    "eslint-plugin-perfectionist": "^5.14.0"
+    "eslint-plugin-no-only-tests": "^3.4.0"
   },
   "devDependencies": {
+    "eslint-plugin-perfectionist": "^5.14.0",
     "oxfmt": "^0.79.0",
     "oxlint": "^1.94.0",
     "tsrs": "7.1.0-beta.tsrs3",
     "vitest": "5.1.0"
   },
   "peerDependencies": {
+    "eslint-plugin-perfectionist": "^5.14.0",
     "oxlint": ">=1.94.0",
     "tsrs": ">=0.25.0-ts7.1.0-beta || ^7.1.0-beta.tsrs2"
+  },
+  "peerDependenciesMeta": {
+    "eslint-plugin-perfectionist": {
+      "optional": true
+    }
   },
   "packageManager": "pnpm@12.21.0"
 }
