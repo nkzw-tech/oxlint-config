@@ -35,7 +35,7 @@ In 3.0, both presets run type-aware rules and report unused lint suppressions as
 Use a Vite+ release that includes Oxlint 1.94+ and `tsrs`, such as `vite-plus@1.7.0`. Add the preset to your project.
 
 ```sh
-pnpm add -D @nkzw/oxlint-config
+vp add -D @nkzw/oxlint-config
 ```
 
 Import the Vite+ entry in your root `vite.config.ts` so TypeScript uses the lint types from your installed version of Vite+.
