@@ -20,8 +20,11 @@ import { defineConfig } from 'oxlint';
 
 export default defineConfig({
   extends: [nkzw],
+  env: nkzw.env,
 });
 ```
+
+Oxlint 1.94 reads `env` from the root config. Setting `env: nkzw.env` keeps the preset's browser and Node.js globals when using `extends`.
 
 To include sorting, change the import to `@nkzw/oxlint-config/with-sorting`. Then run `pnpm oxlint` or `npx oxlint`.
 
