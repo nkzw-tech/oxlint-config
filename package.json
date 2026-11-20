@@ -17,9 +17,9 @@
   },
   "files": [
     "quality",
-    "types",
     "index.js",
     "index.d.ts",
+    "vite-plus.d.ts",
     "with-sorting.js",
     "with-sorting.d.ts"
   ],
@@ -27,8 +27,15 @@
   "main": "index.js",
   "exports": {
     ".": "./index.js",
-    "./types/*": null,
     "./with-sorting": "./with-sorting.js",
+    "./vite-plus": {
+      "types": "./vite-plus.d.ts",
+      "default": "./index.js"
+    },
+    "./vite-plus/with-sorting": {
+      "types": "./vite-plus.d.ts",
+      "default": "./with-sorting.js"
+    },
     "./*": "./*"
   },
   "scripts": {
@@ -36,7 +43,6 @@
     "bench:project": "node bench/project.mjs",
     "format": "oxfmt --write .",
     "lint": "oxlint .",
-    "sync:types": "vitest run test/published-types.test.js --update",
     "test": "vitest run",
     "test:vite-plus": "vitest run --dir integration"
   },
@@ -53,13 +59,17 @@
   },
   "peerDependencies": {
     "oxlint": ">=1.94.0",
-    "tsrs": ">=0.25.0-ts7.1.0-beta || ^7.1.0-beta.tsrs2"
+    "tsrs": ">=0.25.0-ts7.1.0-beta || ^7.1.0-beta.tsrs2",
+    "vite-plus": ">=1.7.0"
   },
   "peerDependenciesMeta": {
     "oxlint": {
       "optional": true
     },
     "tsrs": {
+      "optional": true
+    },
+    "vite-plus": {
       "optional": true
     }
   },

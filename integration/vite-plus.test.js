@@ -38,7 +38,7 @@ test('Vite+ runs both packed presets', { timeout: 120_000 }, ({ onTestFinished }
   execFileSync(pnpm, ['install', '--no-frozen-lockfile'], { cwd, stdio: 'inherit' });
 
   const project = createRequire(join(cwd, 'package.json'));
-  const preset = createRequire(project.resolve('@nkzw/oxlint-config'));
+  const preset = createRequire(project.resolve('@nkzw/oxlint-config/vite-plus'));
   for (const consumer of [project, preset]) {
     for (const peer of ['oxlint', 'tsrs']) {
       expect(() => consumer.resolve(peer + '/package.json')).toThrow(
@@ -50,10 +50,13 @@ test('Vite+ runs both packed presets', { timeout: 120_000 }, ({ onTestFinished }
   writeFileSync(
     join(cwd, 'types.ts'),
     [
-      "import base from '@nkzw/oxlint-config';",
-      "import sorting from '@nkzw/oxlint-config/with-sorting';",
+      "import base from '@nkzw/oxlint-config/vite-plus';",
+      "import sorting from '@nkzw/oxlint-config/vite-plus/with-sorting';",
       'for (const preset of [base, sorting]) {',
-      "  if (preset.rules) preset.rules['no-console'] = 'warn';",
+      '  if (!preset.rules) continue;',
+      "  preset.rules['no-console'] = 'warn';",
+      '  // @ts-expect-error Oxlint rejects unknown severities.',
+      "  preset.rules['no-console'] = 'fatal';",
       '}',
     ].join('\n'),
   );
@@ -76,7 +79,10 @@ test('Vite+ runs both packed presets', { timeout: 120_000 }, ({ onTestFinished }
   );
   execFileSync(pnpm, ['exec', 'tsc'], { cwd, stdio: 'inherit' });
 
-  for (const entry of ['@nkzw/oxlint-config', '@nkzw/oxlint-config/with-sorting']) {
+  for (const entry of [
+    '@nkzw/oxlint-config/vite-plus',
+    '@nkzw/oxlint-config/vite-plus/with-sorting',
+  ]) {
     writeFileSync(
       join(cwd, 'vite.config.ts'),
       [

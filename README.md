@@ -35,16 +35,16 @@ Use a Vite+ release that includes Oxlint 1.94+ and `tsrs`, such as `vite-plus@1.
 pnpm add -D @nkzw/oxlint-config
 ```
 
-Set `lint` to the preset in your root `vite.config.ts`.
+Import the Vite+ entry in your root `vite.config.ts` so TypeScript uses the lint types from your installed version of Vite+.
 
 ```ts
-import nkzw from '@nkzw/oxlint-config';
+import nkzw from '@nkzw/oxlint-config/vite-plus';
 import { defineConfig } from 'vite-plus';
 
 export default defineConfig({ lint: nkzw });
 ```
 
-Run `vp lint`. To enable sorting, import `@nkzw/oxlint-config/with-sorting` instead. See the [Vite+ lint guide](https://viteplus.dev/config/lint).
+Run `vp lint`. To enable sorting, import `@nkzw/oxlint-config/vite-plus/with-sorting`. See the [Vite+ lint guide](https://viteplus.dev/config/lint).
 
 ## Migrating to v3
 
