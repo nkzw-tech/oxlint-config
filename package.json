@@ -37,8 +37,8 @@
     "format": "oxfmt --write .",
     "lint": "oxlint .",
     "sync:types": "vitest run test/published-types.test.js --update",
-    "test": "vitest run test",
-    "test:vite-plus": "node --test integration/vite-plus.js"
+    "test": "vitest run",
+    "test:vite-plus": "vitest run --dir integration"
   },
   "dependencies": {
     "@nkzw/eslint-plugin": "^2.0.0",

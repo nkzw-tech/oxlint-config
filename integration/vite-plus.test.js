@@ -1,14 +1,13 @@
-import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { test } from 'node:test';
+import { expect, test } from 'vitest';
 
-test('Vite+ runs both packed presets with its own Oxlint and type-aware backend', (t) => {
+test('Vite+ runs both packed presets', { timeout: 120_000 }, ({ onTestFinished }) => {
   const cwd = mkdtempSync(join(tmpdir(), 'nkzw-vite-plus-'));
-  t.after(() => rmSync(cwd, { force: true, recursive: true }));
+  onTestFinished(() => rmSync(cwd, { force: true, recursive: true }));
   const pnpm = process.env.npm_execpath ?? 'pnpm';
   execFileSync(pnpm, ['pack', '--out', join(cwd, 'preset.tgz')], {
     cwd: new URL('../', import.meta.url),
@@ -42,7 +41,9 @@ test('Vite+ runs both packed presets with its own Oxlint and type-aware backend'
   const preset = createRequire(project.resolve('@nkzw/oxlint-config'));
   for (const consumer of [project, preset]) {
     for (const peer of ['oxlint', 'tsrs']) {
-      assert.throws(() => consumer.resolve(peer + '/package.json'), { code: 'MODULE_NOT_FOUND' });
+      expect(() => consumer.resolve(peer + '/package.json')).toThrow(
+        expect.objectContaining({ code: 'MODULE_NOT_FOUND' }),
+      );
     }
   }
 
@@ -85,14 +86,12 @@ test('Vite+ runs both packed presets with its own Oxlint and type-aware backend'
       ].join('\n'),
     );
     const result = spawnSync(pnpm, ['exec', 'vp', 'lint', 'input.ts'], { cwd, encoding: 'utf8' });
-    assert.ifError(result.error);
+    expect(result.error).toBeUndefined();
     const output = result.stdout + result.stderr;
-    assert.equal(result.status, 1, output);
-    assert.match(output, /typescript\(no-floating-promises\)/);
-    assert.equal(
-      output.includes('perfectionist(sort-objects)'),
+    expect(result.status, output).toBe(1);
+    expect(output).toContain('typescript(no-floating-promises)');
+    expect(output.includes('perfectionist(sort-objects)'), output).toBe(
       entry.endsWith('/with-sorting'),
-      output,
     );
   }
 });
