@@ -17,6 +17,7 @@
   },
   "files": [
     "quality",
+    "types",
     "index.js",
     "index.d.ts",
     "with-sorting.js",
@@ -26,6 +27,7 @@
   "main": "index.js",
   "exports": {
     ".": "./index.js",
+    "./types/*": null,
     "./with-sorting": "./with-sorting.js",
     "./*": "./*"
   },
@@ -34,7 +36,9 @@
     "bench:project": "node bench/project.mjs",
     "format": "oxfmt --write .",
     "lint": "oxlint .",
-    "test": "vitest run test"
+    "sync:types": "vitest run test/published-types.test.js --update",
+    "test": "vitest run test",
+    "test:vite-plus": "node --test integration/vite-plus.js"
   },
   "dependencies": {
     "@nkzw/eslint-plugin": "^2.0.0",
@@ -50,6 +54,14 @@
   "peerDependencies": {
     "oxlint": ">=1.94.0",
     "tsrs": ">=0.25.0-ts7.1.0-beta || ^7.1.0-beta.tsrs2"
+  },
+  "peerDependenciesMeta": {
+    "oxlint": {
+      "optional": true
+    },
+    "tsrs": {
+      "optional": true
+    }
   },
   "packageManager": "pnpm@12.21.0"
 }

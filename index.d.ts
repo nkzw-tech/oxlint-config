@@ -1,3 +1,3 @@
-declare const config: import('oxlint').OxlintConfig;
+declare const config: import('./types/oxlint.js').OxlintConfig;
 
 export default config;

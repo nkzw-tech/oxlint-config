@@ -4,6 +4,8 @@ _Opinionated Oxlint config with sensible defaults._
 
 ## Installation & Usage
 
+### Standalone Oxlint
+
 Install the preset with Oxlint 1.94+ and its type-aware backend, `tsrs`:
 
 ```
@@ -24,6 +26,25 @@ export default defineConfig({
 To include sorting, change the import to `@nkzw/oxlint-config/with-sorting`. Then run `pnpm oxlint` or `npx oxlint`.
 
 In 3.0, both presets run type-aware rules and report unused lint suppressions as errors by default. If you already use Oxlint 1.94+ and only need the backend, run `npm install -D tsrs` or `pnpm add -D tsrs`.
+
+### Vite+
+
+Use a Vite+ release that includes Oxlint 1.94+ and `tsrs`, such as `vite-plus@1.7.0`. Add the preset to your project.
+
+```sh
+pnpm add -D @nkzw/oxlint-config
+```
+
+Set `lint` to the preset in your root `vite.config.ts`.
+
+```ts
+import nkzw from '@nkzw/oxlint-config';
+import { defineConfig } from 'vite-plus';
+
+export default defineConfig({ lint: nkzw });
+```
+
+Run `vp lint`. To enable sorting, import `@nkzw/oxlint-config/with-sorting` instead. See the [Vite+ lint guide](https://viteplus.dev/config/lint).
 
 ## Migrating to v3
 
