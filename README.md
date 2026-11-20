@@ -44,7 +44,12 @@ Import the Vite+ entry in your root `vite.config.ts` so TypeScript uses the lint
 import nkzw from '@nkzw/oxlint-config/vite-plus';
 import { defineConfig } from 'vite-plus';
 
-export default defineConfig({ lint: nkzw });
+export default defineConfig({
+  lint: {
+    extends: [nkzw],
+    env: nkzw.env,
+  },
+});
 ```
 
 Run `vp lint`. To enable sorting, import `@nkzw/oxlint-config/vite-plus/with-sorting`. See the [Vite+ lint guide](https://viteplus.dev/config/lint).

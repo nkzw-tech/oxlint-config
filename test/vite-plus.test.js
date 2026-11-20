@@ -87,6 +87,7 @@ test('Vite+ runs both packed presets', { timeout: 120_000 }, ({ onTestFinished }
     ['@nkzw/oxlint-config/vite-plus', 'preset'],
     ['@nkzw/oxlint-config/vite-plus/with-sorting', 'preset'],
     ['@nkzw/oxlint-config/vite-plus', '{ extends: [preset], env: preset.env }'],
+    ['@nkzw/oxlint-config/vite-plus/with-sorting', '{ extends: [preset], env: preset.env }'],
   ]) {
     writeFileSync(
       join(cwd, 'vite.config.ts'),
