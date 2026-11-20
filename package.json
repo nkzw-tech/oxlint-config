@@ -43,8 +43,7 @@
     "bench:project": "node bench/project.mjs",
     "format": "oxfmt --write .",
     "lint": "oxlint .",
-    "test": "vitest run",
-    "test:vite-plus": "vitest run --dir integration"
+    "test": "vitest run test"
   },
   "dependencies": {
     "@nkzw/eslint-plugin": "^2.0.0",
