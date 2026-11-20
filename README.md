@@ -25,6 +25,29 @@ To include sorting, change the import to `@nkzw/oxlint-config/with-sorting`. The
 
 In 3.0, both presets run type-aware rules and report unused lint suppressions as errors by default. If you already use Oxlint 1.94+ and only need the backend, run `npm install -D tsrs` or `pnpm add -D tsrs`.
 
+### Vite+
+
+If you are using [Vite+](https://viteplus.dev), you only need to install the preset:
+
+```bash
+npm install -D @nkzw/oxlint-config
+```
+
+Then add it directly to your `vite.config.ts`:
+
+```ts
+import nkzw from '@nkzw/oxlint-config';
+import { defineConfig } from 'vite-plus';
+
+export default defineConfig({
+  lint: {
+    extends: [nkzw],
+  },
+});
+```
+
+Then run `vp lint`.
+
 ## Migrating to v3
 
 1. Upgrade `@nkzw/oxlint-config` to v3, install Oxlint 1.94+ and `tsrs`, and switch your import to `@nkzw/oxlint-config/with-sorting` to keep v2’s sorting rules.
