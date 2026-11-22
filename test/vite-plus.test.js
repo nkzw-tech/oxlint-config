@@ -19,6 +19,7 @@ test('Vite+ runs both packed presets', { timeout: 120_000 }, ({ onTestFinished }
         '@nkzw/oxlint-config': 'file:./preset.tgz',
         // The JavaScript plugins declare ESLint and TypeScript peers.
         eslint: '10.15.0',
+        'eslint-plugin-perfectionist': '5.14.0',
         typescript: '6.0.3',
         'vite-plus': '1.7.0',
       },

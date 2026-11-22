@@ -77,7 +77,6 @@ const config = {
   ],
   plugins: ['typescript', 'import', 'jsx-a11y', 'oxc', 'promise', 'react', 'unicorn', 'vitest'],
   rules: {
-    '@nkzw/ensure-relay-types': 'error',
     '@nkzw/no-instanceof': 'error',
     '@nkzw/require-use-effect-arguments': 'error',
     '@typescript-eslint/array-type': [

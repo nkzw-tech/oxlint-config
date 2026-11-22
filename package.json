@@ -1,6 +1,6 @@
 {
   "name": "@nkzw/oxlint-config",
-  "version": "3.0.1",
+  "version": "4.0.0",
   "description": "Oxlint config with sensible defaults.",
   "keywords": [
     "autofix",
@@ -46,22 +46,26 @@
     "test": "vitest run test"
   },
   "dependencies": {
-    "@nkzw/eslint-plugin": "^2.0.0",
-    "eslint-plugin-no-only-tests": "^3.4.0",
-    "eslint-plugin-perfectionist": "^5.14.0"
+    "@nkzw/eslint-plugin": "^3.0.0",
+    "eslint-plugin-no-only-tests": "^3.4.0"
   },
   "devDependencies": {
+    "eslint-plugin-perfectionist": "^5.14.0",
     "oxfmt": "^0.79.0",
     "oxlint": "^1.94.0",
-    "tsrs": "7.1.0-beta.tsrs3",
-    "vitest": "5.1.0"
+    "tsrs": "7.1.0-beta.tsrs4",
+    "vitest": "5.1.1"
   },
   "peerDependencies": {
+    "eslint-plugin-perfectionist": "^5.14.0",
     "oxlint": ">=1.94.0",
     "tsrs": ">=0.25.0-ts7.1.0-beta || ^7.1.0-beta.tsrs2",
     "vite-plus": ">=1.7.0"
   },
   "peerDependenciesMeta": {
+    "eslint-plugin-perfectionist": {
+      "optional": true
+    },
     "oxlint": {
       "optional": true
     },
