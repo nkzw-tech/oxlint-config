@@ -181,10 +181,10 @@ importers:
       eslint-plugin-no-only-tests:
         specifier: ^3.4.0
         version: 3.4.0
+    devDependencies:
       eslint-plugin-perfectionist:
         specifier: ^5.14.0
         version: 5.14.0(eslint@10.15.0)(typescript@6.0.3)
-    devDependencies:
       oxfmt:
         specifier: ^0.79.0
         version: 0.79.0
