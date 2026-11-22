@@ -1,0 +1,2 @@
+minimumReleaseAgeExclude:
+  - '@nkzw/eslint-plugin@3.0.0'
