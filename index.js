@@ -1,6 +1,5 @@
-import { defineConfig } from 'oxlint';
-
-export default defineConfig({
+/** @satisfies {import('oxlint').OxlintConfig} */
+const config = {
   categories: {
     correctness: 'off',
   },
@@ -319,4 +318,6 @@ export default defineConfig({
     'use-isnan': 'error',
     'valid-typeof': 'error',
   },
-});
+};
+
+export default config;

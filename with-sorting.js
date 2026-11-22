@@ -1,10 +1,10 @@
-import { defineConfig } from 'oxlint';
 import base from './index.js';
 
-export default defineConfig({
+/** @satisfies {import('oxlint').OxlintConfig} */
+const config = {
   ...base,
   jsPlugins: [
-    ...base.jsPlugins,
+    ...(base.jsPlugins ?? []),
     {
       name: 'perfectionist',
       specifier: import.meta.resolve('eslint-plugin-perfectionist'),
@@ -30,4 +30,6 @@ export default defineConfig({
       },
     ],
   },
-});
+};
+
+export default config;
